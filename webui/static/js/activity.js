@@ -1,7 +1,9 @@
-function ActivityPage() {
+function ActivityMonitor() {
 	this.sampleSize = 1024;
 	this.analyzer = null;
 	this.eventSubject = null;
+	this.isRecording = false;
+	this.audioCtx = null;
 
 	this.volumeVis = VolumeVisualization({
 						"id": "volume_visualization",
@@ -11,9 +13,9 @@ function ActivityPage() {
 	this.historyVis = new HistoryVisualization();
 }
 
-ActivityPage.NOT_BARKING = "NOT_BARKING";
-ActivityPage.BARKING = "BARKING";
-ActivityPage.BARKING_TIMEOUT_MS = 30000;
+ActivityMonitor.NOT_BARKING = "NOT_BARKING";
+ActivityMonitor.BARKING = "BARKING";
+ActivityMonitor.BARKING_TIMEOUT_MS = 30000;
 
 function EventState(opts) {
 	if (typeof opts === 'undefined') {
@@ -24,65 +26,81 @@ function EventState(opts) {
 	this.lastBark = opts.lastBark || 0;
 	this.barkDetected = opts.barkDetected || false;
 	this.volume = opts.volume || 0;
-	this.mode = opts.mode || ActivityPage.NOT_BARKING;
-	this.prevMode = opts.prevMode || ActivityPage.NOT_BARKING;
+	this.mode = opts.mode || ActivityMonitor.NOT_BARKING;
+	this.prevMode = opts.prevMode || ActivityMonitor.NOT_BARKING;
 }
 
-ActivityPage.prototype.startListening = function() {
+ActivityMonitor.prototype.startListening = function() {
 	var self = this;
+
+	self.historyVis.resume();
+
+	if (self.audioCtx !== null) {
+		if (self.audioCtx.state === "suspended") {
+			self.audioCtx.resume();
+			return;
+		}
+	}
 
 	navigator.getUserMedia = (navigator.getUserMedia ||
                         navigator.webkitGetUserMedia ||
                         navigator.mozGetUserMedia ||
                         navigator.msGetUserMedia);
 
-    navigator.getUserMedia({audio:true}, function(stream) {
+  navigator.getUserMedia({audio:true}, function(stream) {
 
-	    var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-	    var source   = audioCtx.createMediaStreamSource(stream);
-	    var analyzer = audioCtx.createAnalyser();
-	    var samples  = new Uint8Array(self.sampleSize);
+	  self.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+	  var source   = self.audioCtx.createMediaStreamSource(stream);
+	  var analyzer = self.audioCtx.createAnalyser();
+	  var samples  = new Uint8Array(self.sampleSize);
 
-	    analyzer.fftSize = self.sampleSize;
-	    analyzer.minDecibels = -55;
-	    analyzer.maxDecibels = -10;
-	    source.connect(analyzer);
+	  analyzer.fftSize = self.sampleSize;
+	  analyzer.minDecibels = -55;
+	  analyzer.maxDecibels = -10;
+	  source.connect(analyzer);
 
-	    self.onAnalyzerReady(analyzer);
+		self.onAnalyzerReady(analyzer);
 
-    }, function(err) {throw Error("Error: " + err)});
+  }, function(err) {throw Error("Error: " + err)});
 
 }
 
-ActivityPage.prototype.recordState = function(state) {
+ActivityMonitor.prototype.stopListening = function() {
+	this.historyVis.suspend();
+	if (this.audioCtx && this.audioCtx.state === "running") {
+		this.audioCtx.suspend();
+	}
+}
+
+ActivityMonitor.prototype.recordState = function(state) {
 	var tpl = $("#event-row-tpl");
 	var newRow = tpl.clone();
 	newRow.removeClass("hide");
 	newRow.find(".timestamp").text(new Date(state.timestamp));
-	newRow.find(".description").text(state.mode === ActivityPage.BARKING ? "Started Barking" : "Stopped Barking");
+	newRow.find(".description").text(state.mode === ActivityMonitor.BARKING ? "Started Barking" : "Stopped Barking");
 	newRow.find(".level").text(state.volume.toFixed(2));
 	tpl.parent().append(newRow);
 }
 
-ActivityPage.prototype.determineNewState = function(oldState, volume) {
+ActivityMonitor.prototype.determineNewState = function(oldState, volume) {
 	var self = this;
 
 	var timestamp = Date.now();
 	var newState = new EventState(oldState);
 
 	newState.timestamp = timestamp;
-	newState.barkDetected = volume > 0.8;	
+	newState.barkDetected = volume > 0.8;
 	newState.lastBark = newState.barkDetected ? timestamp : oldState.lastBark;
 	newState.prevMode = oldState.mode;
 	newState.volume = volume;
 
-	if (oldState.mode === ActivityPage.NOT_BARKING) {
+	if (oldState.mode === ActivityMonitor.NOT_BARKING) {
 		if (newState.barkDetected) {
-			newState.mode = ActivityPage.BARKING;
+			newState.mode = ActivityMonitor.BARKING;
 		}
 	} else {
-		if (!newState.barkDetected && oldState.lastBark < timestamp - ActivityPage.BARKING_TIMEOUT_MS) {
-			newState.mode = ActivityPage.NOT_BARKING;	
+		if (!newState.barkDetected && oldState.lastBark < timestamp - ActivityMonitor.BARKING_TIMEOUT_MS) {
+			newState.mode = ActivityMonitor.NOT_BARKING;
 		}
 	}
 
@@ -90,7 +108,7 @@ ActivityPage.prototype.determineNewState = function(oldState, volume) {
 
 };
 
-ActivityPage.prototype.pollAudio = function() {
+ActivityMonitor.prototype.pollAudio = function() {
 	var self = this;
 	var dataArray = new Float32Array(self.sampleSize);
 
@@ -101,7 +119,7 @@ ActivityPage.prototype.pollAudio = function() {
 	setTimeout(function() { self.pollAudio(); }, 20);
 };
 
-ActivityPage.prototype.onAnalyzerReady = function(analyzer) {
+ActivityMonitor.prototype.onAnalyzerReady = function(analyzer) {
 	var self = this;
 	self.analyzer = analyzer;
 
@@ -112,7 +130,7 @@ ActivityPage.prototype.onAnalyzerReady = function(analyzer) {
 		.scan is responsible for identify the current state, based on the previous state
 		.filter ensures that only the first event for each state is emitted
 	**/
-	// Subject for 
+	// Subject for
 	self.dataSubject = new Rx.Subject();
 
 	// Create a shared stream for multiple subscriptions
@@ -125,8 +143,8 @@ ActivityPage.prototype.onAnalyzerReady = function(analyzer) {
 
 	// Transform into discrete events
 	var eventStream = rawDataStream.map(function(dataArray) {
-		// Transform into max volume 
-		var maxVolume = _(dataArray).map(function (i) { 
+		// Transform into max volume
+		var maxVolume = _(dataArray).map(function (i) {
 							return Math.abs(i);}
 						).max();
 
@@ -143,15 +161,15 @@ ActivityPage.prototype.onAnalyzerReady = function(analyzer) {
 		.flatMap(
 			function (windowStream){
 				return windowStream.max(
-					function(a, b) { 
+					function(a, b) {
 						if (a.volume > b.volume) {
 							return 1;
-						} else if (a.volume < b.volume) { 
+						} else if (a.volume < b.volume) {
 							return -1;
 						}
 						return 0;
 					}
-				);	
+				);
 			}
 		).share();
 
@@ -178,7 +196,7 @@ ActivityPage.prototype.onAnalyzerReady = function(analyzer) {
 
 	// Record state transitions
 	eventStream.filter(function(state) {
-		// Filter out duplicate state (we only care about transitions)	
+		// Filter out duplicate state (we only care about transitions)
 		return state.prevMode != state.mode;
 	}).subscribe(function(state) {
 		// Record state transitions
@@ -220,7 +238,7 @@ function startRecordingResponse() {
 function stopRecordingResponse(recorder) {
 	recorder.stop();
 	recorder.exportWAV(function(wavBlob) {
-		console.log("Got wav: ", wavBlob)		
+		console.log("Got wav: ", wavBlob)
 
 		// Need to use reader to conver blob to Uint8Array
         var reader = new FileReader();
@@ -239,6 +257,7 @@ function stopRecordingResponse(recorder) {
 
 function HistoryVisualization() {
 	this.size = 300;
+	this.paused = false;
 	var labels = _.fill(new Array(this.size), "");
 	var datasets = [
 			{
@@ -247,7 +266,7 @@ function HistoryVisualization() {
 		];
 
 	var ctx = $("#history_chart").get(0).getContext("2d");
-	this.chart = new Chart(ctx).Line({labels: labels, datasets: datasets}, 
+	this.chart = new Chart(ctx).Line({labels: labels, datasets: datasets},
 		{
 			showTooltips:false,
 			animation:false,
@@ -256,12 +275,16 @@ function HistoryVisualization() {
 			scaleSteps: 1,
 			scaleStepWidth: 1,
 			scaleShowVerticalLines: false,
-			bezierCurve:false, 
+			bezierCurve:false,
 			pointDot:false
 		});
 }
 
 HistoryVisualization.prototype.update = function(newValue) {
+	if (this.paused) {
+		return;
+	}
+
 	var i = 0;
 	var dataPoints = this.chart.datasets[0].points;
 	for (; i < dataPoints.length-1; i++){
@@ -272,13 +295,21 @@ HistoryVisualization.prototype.update = function(newValue) {
 	this.chart.update();
 }
 
+HistoryVisualization.prototype.suspend = function() {
+	this.paused = true;
+}
+
+HistoryVisualization.prototype.resume = function() {
+	this.paused = false;
+}
+
 var VolumeVisualization = function(opts) {
 	if (typeof opts === "undefined") {
 		opts = {};
 	}
 
 	if (!opts.id) throw "id required";
-	if (!opts.sampleSize || isNaN(opts.sampleSize)) throw "sampleSize must be a number";  
+	if (!opts.sampleSize || isNaN(opts.sampleSize)) throw "sampleSize must be a number";
 
 	var downsampleFactor = 20;
 	var points = new Array(parseInt(opts.sampleSize/downsampleFactor));
@@ -301,7 +332,7 @@ var VolumeVisualization = function(opts) {
 	            data: points
 	        },
 	    ]
-	};	
+	};
 
 
 	var options = {
@@ -317,7 +348,7 @@ var VolumeVisualization = function(opts) {
 		scaleShowVerticalLines: false
 	};
 
-	var lineChart = new Chart(ctx).Line(data, options);	
+	var lineChart = new Chart(ctx).Line(data, options);
 
 	function updateLineChart(data) {
 		var points = lineChart.datasets[0].points;
@@ -342,7 +373,7 @@ var VolumeVisualization = function(opts) {
 		scaleOverride: true,
 		scaleStepWidth: 1,
 		scaleSteps: 1
-	}; 
+	};
 
 	var ctx2 = $("#volume_visualization2").get(0).getContext("2d");
 	var barChart = new Chart(ctx2).Bar(barData, barOptions);
@@ -364,4 +395,3 @@ var VolumeVisualization = function(opts) {
 	};
 
 };
-

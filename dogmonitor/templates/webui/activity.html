@@ -81,8 +81,17 @@
 </div>
   <script>
   $(function() {
-    var page = new ActivityPage();
-    page.startListening();
+    var monitor = new ActivityMonitor();
+    $("#start-recording").on('click', function() {
+      monitor.startListening();
+      $("#stop-recording").toggleClass('disabled');
+      $(this).toggleClass('disabled');
+    });
+    $("#stop-recording").on('click', function() {
+      monitor.stopListening();
+      $("#start-recording").toggleClass('disabled');
+      $(this).toggleClass('disabled');
+    });
   });
   </script>
 {% endblock %}
