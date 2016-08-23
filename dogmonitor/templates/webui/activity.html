@@ -1,0 +1,88 @@
+{% extends 'webui/layouts/default.html' %}
+{% load staticfiles %}
+{% block header_js %}
+    <script src="{% static 'js/activity.js' %}"></script>
+{% endblock %}
+
+{% block body %}
+<div class="row">
+  <div class="col-sm-3 col-md-2 sidebar">
+    <ul class="nav nav-sidebar">
+      <li class="active"><a href="#">Current Activity<span class="sr-only">(current)</span></a></li>
+      <li><a href="#">Reports</a></li>
+      <li><a href="#">Analytics</a></li>
+      <li><a href="#">Export</a></li>
+    </ul>
+  </div>
+  <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
+	  <h1 class="page-header">Current Activity</h1>
+	  <button id="start-recording" class='btn btn-lg btn-default'>Start Recording</button>
+	  <button id="stop-recording" class='btn btn-lg btn-default disabled'>Stop Recording</button>
+
+	  <div class="row">
+	  	<div class="col-md-1">
+		  <canvas id="volume_visualization2" style='width:100%; height:200px;'>
+		  </canvas>
+	  	</div>
+	  	<div class="col-md-3">
+		  <canvas id="volume_visualization" style='width:100%; height:200px;'>
+		  </canvas>
+	  	</div>
+	  	<div class="col-md-8">
+		  <canvas id="history_chart" style='width:100%; height:200px;'>
+		  </canvas>
+		</div>
+	  </div>
+	  <div class="row">
+	  	<div class="col-sm-2 well text-center" >
+	  		<div><h4>Volume</h4></div>
+	  		<div>
+	  			<h1><span id="current-volume">0</span>db</h1>
+	  		</div>
+	  	</div>
+	  	<div class="col-sm-2 well text-center">
+	  		<div><h4>db Threshold</h4></div>
+	  		<div class='form-group'>
+	  			<input type='text' id="db-threshold" class="form-control" value="-48" />
+	  		</div>
+	  	</div>
+	  </div>
+	  <div class="row">
+	  	<div class="col-sm-6">
+	  		<button id="record-response" class='btn btn-default' data-state="off">Record Response</button>
+	  		<ul>
+	  			<li><button id="{{id}}" class='response btn btn-default'>Play Response {{name}}</button></li>
+	  		</ul>
+
+	  	</div>
+	  </div>
+	  <div class="table-responsive">
+	    <table class="table table-striped">
+	      <thead>
+	        <tr>
+	          <th>Start Time</th>
+	          <th>Duration</th>
+	          <th>Noise Level</th>
+	        </tr>
+	      </thead>
+	      <tbody>
+	      	<tr id="event-row-tpl" class="hide">
+	      		<td class='timestamp'>
+	      		</td>
+	      		<td class='description'>
+	      		</td>
+	      		<td class='level'>
+	      		</td>
+	      	</tr>
+	      </tbody>
+	    </table>
+	  </div>
+  </div>
+</div>
+  <script>
+  $(function() {
+    var page = new ActivityPage();
+    page.startListening();
+  });
+  </script>
+{% endblock %}
