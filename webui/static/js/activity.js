@@ -259,6 +259,11 @@ function HistoryVisualization() {
 	this.size = 300;
 	this.paused = false;
 	var labels = _.fill(new Array(this.size), "");
+	labels[240] = "-1 min"
+	labels[180] = "-2 min"
+	labels[120] = "-3 min"
+	labels[60] = "-4 min"
+	labels[0] = "-5 min"
 	var datasets = [
 			{
 				data: _.fill(new Array(this.size), 0)
@@ -278,6 +283,7 @@ function HistoryVisualization() {
 			bezierCurve:false,
 			pointDot:false
 		});
+	this.update(0);
 }
 
 HistoryVisualization.prototype.update = function(newValue) {

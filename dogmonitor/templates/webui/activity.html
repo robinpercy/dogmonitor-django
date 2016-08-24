@@ -15,25 +15,81 @@
     </ul>
   </div>
   <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
-	  <h1 class="page-header">Current Activity</h1>
-	  <button id="start-recording" class='btn btn-lg btn-default'>Start Recording</button>
-	  <button id="stop-recording" class='btn btn-lg btn-default disabled'>Stop Recording</button>
+    <div class="row">
+      <div class="col-md-12">
+    	  <h1 class="page-header">Current Activity</h1>
+        Todo:
+        <ul>
+          <li>Add threshold indicator to Noise Level</li>
+          <li>Add functions for adjusting sensitivity</li>
+          <li>Add a chart that summarises the day by minute at the bottom of the page</li>
+        </ul>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-3">
+        <button id="start-recording" class='btn btn-lg btn-default'>
+          <span class='glyphicon glyphicon-record'></span> Start Recording
+        </button>
+        <button id="stop-recording" class='btn btn-lg btn-default disabled hidden'>
+          <span class='glyphicon glyphicon-record' style='color:red'></span>
+          Stop Recording
+        </button>
+      </div>
+    </div>
+    <div class='row'>
+      <div class="col-md-4">
+        <div class="row">
+          <div class="col-md-12">
+            <h3>Microphone Sensitivity</h3>
+            <small>Use this to increase or decrease the recording sensitivity</small>
+          </div>
+        </div>
+        <div class="row" style='padding-top:20px'>
+          <div class="col-md-2">
+            <div class="btn-group-vertical" role="group">
+              <button type="button" class="btn btn-default btn-lg">
+                <span class="glyphicon glyphicon-arrow-up"></span>
+                +
+              </button>
+              <button type="button" class="btn btn-default btn-lg">
+                <span class="glyphicon glyphicon-arrow-down"></span>
+                -
+              </button>
+            </div>
+          </div>
+          <div class="col-md-9 col-md-offset-1">
+      	  	<div class="well text-center" style='width:50%;'>
+              <h2>
+                  <small>Sensitivity</small>
+                  <div id="current-sensitivity">Normal</div>
+              </h2>
+      	  	</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-7">
+        <div class="row">
+          <div class="col-md-12">
+            <h3>Noise Level</h3>
+            <small>This shows the current volume levels being detected by the microphone.</small>
+          </div>
+        </div>
+        <div class="row">
+    	  	<div class="col-md-2">
+      		  <canvas id="volume_visualization2" style='width:100%; height:200px;'>
+      		  </canvas>
+          </div>
 
-	  <div class="row">
-	  	<div class="col-md-1">
-		  <canvas id="volume_visualization2" style='width:100%; height:200px;'>
-		  </canvas>
-	  	</div>
-	  	<div class="col-md-3">
-		  <canvas id="volume_visualization" style='width:100%; height:200px;'>
-		  </canvas>
-	  	</div>
-	  	<div class="col-md-8">
-		  <canvas id="history_chart" style='width:100%; height:200px;'>
-		  </canvas>
-		</div>
-	  </div>
-	  <div class="row">
+    	  	<div class="col-md-10">
+      		  <canvas id="volume_visualization" style='width:100%; height:200px;'>
+      		  </canvas>
+    	  	</div>
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <!--
 	  	<div class="col-sm-2 well text-center" >
 	  		<div><h4>Volume</h4></div>
 	  		<div>
@@ -46,16 +102,16 @@
 	  			<input type='text' id="db-threshold" class="form-control" value="-48" />
 	  		</div>
 	  	</div>
-	  </div>
-	  <div class="row">
-	  	<div class="col-sm-6">
-	  		<button id="record-response" class='btn btn-default' data-state="off">Record Response</button>
-	  		<ul>
-	  			<li><button id="{{id}}" class='response btn btn-default'>Play Response {{name}}</button></li>
-	  		</ul>
-
-	  	</div>
-	  </div>
+    -->
+    </div>
+    <div class="row">
+	  	<div class="col-md-11 offset-md-1">
+      <h3>Volume Over the Past 5 Minutes</h3>
+		  <canvas id="history_chart" style='width:100%; height:200px;'>
+		  </canvas>
+  		</div>
+    </div>
+    <!--
 	  <div class="table-responsive">
 	    <table class="table table-striped">
 	      <thead>
@@ -77,6 +133,7 @@
 	      </tbody>
 	    </table>
 	  </div>
+  -->
   </div>
 </div>
   <script>
@@ -84,13 +141,13 @@
     var monitor = new ActivityMonitor();
     $("#start-recording").on('click', function() {
       monitor.startListening();
-      $("#stop-recording").toggleClass('disabled');
-      $(this).toggleClass('disabled');
+      $("#stop-recording").toggleClass('disabled hidden');
+      $(this).toggleClass('disabled hidden');
     });
     $("#stop-recording").on('click', function() {
       monitor.stopListening();
-      $("#start-recording").toggleClass('disabled');
-      $(this).toggleClass('disabled');
+      $("#start-recording").toggleClass('disabled hidden');
+      $(this).toggleClass('disabled hidden');
     });
   });
   </script>
