@@ -323,7 +323,7 @@ var VolumeVisualization = function(opts) {
 	var i;
 	var length = points.length;
 	for(i=0; i < length; i++) {
-		points[i] = 20 * (i/points.length);
+		points[i] = 0;
 		labels[i] = "";
 	}
 
@@ -354,7 +354,7 @@ var VolumeVisualization = function(opts) {
 		scaleShowVerticalLines: false
 	};
 
-	var lineChart = new Chart(ctx).Line(data, options);
+	var lineChart = new Chart(ctx).LineWithThreshold(data, options);
 
 	function updateLineChart(data) {
 		var points = lineChart.datasets[0].points;
@@ -382,7 +382,7 @@ var VolumeVisualization = function(opts) {
 	};
 
 	var ctx2 = $("#volume_visualization2").get(0).getContext("2d");
-	var barChart = new Chart(ctx2).Bar(barData, barOptions);
+	var barChart = new Chart(ctx2).BarWithThreshold(barData, barOptions);
 
 	function updateBarChart(data) {
 
@@ -401,3 +401,45 @@ var VolumeVisualization = function(opts) {
 	};
 
 };
+
+function drawThresholdLine(self) {
+    var scale = self.scale
+
+    // draw line
+		var ctx = self.chart.ctx;
+		console.log(self);
+		var y = ctx.canvas.height * 0.2;
+		var pLeft = {x:scale.xScalePaddingLeft, y:scale.startPoint}
+		var pRight = {x: ctx.canvas.width, y:y}
+    ctx.fillStyle = 'rgba(255,230,230,0.5)';
+		ctx.fillRect(pLeft.x,pLeft.y,pRight.x, pRight.y)
+		/*
+    ctx.beginPath();
+    ctx.moveTo(pLeft.x, pLeft.y);
+    ctx.strokeStyle = '#b88888';
+		ctx.lineWidth = 3;
+    ctx.lineTo(pRight.x, pRight.y);
+    ctx.stroke();
+		ctx.textAlign = 'center';
+
+		var txt = "BARKING DETECTED";
+		var txtDim = ctx.measureText(ctx);
+		ctx.fillText("BARKING DETECTED", ctx.canvas.width/2, pLeft.y)
+		*/
+}
+
+Chart.types.Bar.extend({
+		name: "BarWithThreshold",
+		draw: function() {
+			Chart.types.Bar.prototype.draw.apply(this, arguments);
+			drawThresholdLine(this);
+		}
+});
+
+Chart.types.Line.extend({
+		name: "LineWithThreshold",
+		draw: function() {
+			Chart.types.Line.prototype.draw.apply(this, arguments);
+			drawThresholdLine(this);
+		}
+});
