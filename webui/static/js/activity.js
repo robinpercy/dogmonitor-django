@@ -402,29 +402,57 @@ var VolumeVisualization = function(opts) {
 
 };
 
-function drawThresholdLine(self) {
+function drawThresholdLine(self, topAndBottom) {
+		/*
+		scale gives us reference points on the y-scale.
+		- startPoint is the y coord for the top of the y axis
+		- endpoint is the y coord for its bottom.
+    - xScalePaddingLeft gives the y axis' offset from the left
+		*/
     var scale = self.scale
 
-    // draw line
+		var height = 0.2;
+		if ("undefined" === typeof topAndBottom) {
+			topAndBottom = false;
+		}
+
+		if (topAndBottom) {
+			height /= 2;
+		}
+
 		var ctx = self.chart.ctx;
+
+		var txt = "BARKING";
+		var textDim = ctx.measureText(txt);
+		var textLeft = scale.width/2 + textDim.width/2 + scale.xScalePaddingLeft/2;
+
+    // draw line
 		console.log(self);
-		var y = ctx.canvas.height * 0.2;
-		var pLeft = {x:scale.xScalePaddingLeft, y:scale.startPoint}
-		var pRight = {x: ctx.canvas.width, y:y}
+		var y = ctx.canvas.height * height;
+		var topLeft = {x:scale.xScalePaddingLeft, y:scale.startPoint};
+		var rectDim = {x: ctx.canvas.width, y:y};
     ctx.fillStyle = 'rgba(255,230,230,0.5)';
-		ctx.fillRect(pLeft.x,pLeft.y,pRight.x, pRight.y)
+		ctx.fillRect(topLeft.x,topLeft.y,rectDim.x,rectDim.y);
+	  ctx.fillStyle = 'rgba(188,150,150,1)';
+		ctx.fillText("BARKING", textLeft, scale.startPoint + 10);
+		if (topAndBottom) {
+			console.log("CALLED",topLeft.x, scale.endPoint-y, rectDim.x, scale.endPoint);
+	    ctx.fillStyle = 'rgba(255,230,230,0.5)';
+			ctx.fillRect(topLeft.x, scale.endPoint-y, rectDim.x, y);
+		  ctx.fillStyle = 'rgba(188,150,150,1)';
+			ctx.fillText(txt, textLeft, scale.endPoint-y + 10)
+		}
 		/*
     ctx.beginPath();
-    ctx.moveTo(pLeft.x, pLeft.y);
+    ctx.moveTo(topLeft.x, topLeft.y);
     ctx.strokeStyle = '#b88888';
 		ctx.lineWidth = 3;
-    ctx.lineTo(pRight.x, pRight.y);
+    ctx.lineTo(rectDim.x, rectDim.y);
     ctx.stroke();
 		ctx.textAlign = 'center';
 
 		var txt = "BARKING DETECTED";
 		var txtDim = ctx.measureText(ctx);
-		ctx.fillText("BARKING DETECTED", ctx.canvas.width/2, pLeft.y)
 		*/
 }
 
@@ -440,6 +468,6 @@ Chart.types.Line.extend({
 		name: "LineWithThreshold",
 		draw: function() {
 			Chart.types.Line.prototype.draw.apply(this, arguments);
-			drawThresholdLine(this);
+			drawThresholdLine(this, true);
 		}
 });

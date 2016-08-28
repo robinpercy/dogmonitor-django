@@ -20,5 +20,6 @@ from webui import views
 
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
-    url(r'^index', views.activity)
+    url(r'^activity', views.activity),
+    url(r'^activity2', views.activity2)
 ]
