@@ -1,0 +1,127 @@
+{% extends 'webui/layouts/default.html' %}
+{% load staticfiles %}
+{% block header_js %}
+    <script src="{% static 'js/activity.js' %}"></script>
+{% endblock %}
+
+{% block body %}
+<div class="row">
+  <div class="col-sm-3 col-md-2 sidebar">
+    <ul class="nav nav-sidebar">
+      <li class="active"><a href="#">Current Activity!!!<span class="sr-only">(current)</span></a></li>
+      <li><a href="#">Reports</a></li>
+      <li><a href="#">Analytics</a></li>
+      <li><a href="#">Export</a></li>
+    </ul>
+  </div>
+  <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
+    <div class="row" style='margin-bottom:25px'>
+      <div class="col-md-3">
+        <button id="start-recording" class='btn btn-lg btn-default'>
+          <span class='glyphicon glyphicon-record'></span> Start Recording
+        </button>
+        <button id="stop-recording" class='btn btn-lg btn-default disabled hidden'>
+          <span class='glyphicon glyphicon-record' style='color:red'></span>
+          Stop Recording
+        </button>
+      </div>
+      <div class="col-md-8 text-right">
+        Microphone Sensitivity<br/>
+        Min <input id="slider" type='text'></input> Max
+      </div>
+    </div>
+    <div class='row'>
+      <div class="col-md-12">
+        <div class="row">
+
+    	  	<div class="col-md-2 text-center">
+            <h4>Volume</h4>
+      		  <canvas id="volume_visualization2" style='width:100%; height:300px;'>
+      		  </canvas>
+          </div>
+
+    	  	<div class="col-md-8 col-md-offset-1 text-center">
+            <h4>Last 5 Minutes</h4>
+      		  <canvas id="history_chart" style='width:100%; height:335px;'>
+      		  </canvas>
+
+      		  <canvas id="volume_visualization" style='width:100%; height:200px; display:none'>
+      		  </canvas>
+    	  	</div>
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-11">
+  		  <canvas id="summary_chart" style='width:100%; height:335px;'>
+  		  </canvas>
+      </div>
+      <!--
+	  	<div class="col-sm-2 well text-center" >
+	  		<div><h4>Volume</h4></div>
+	  		<div>
+	  			<h1><span id="current-volume">0</span>db</h1>
+	  		</div>
+	  	</div>
+	  	<div class="col-sm-2 well text-center">
+	  		<div><h4>db Threshold</h4></div>
+	  		<div class='form-group'>
+	  			<input type='text' id="db-threshold" class="form-control" value="-48" />
+	  		</div>
+	  	</div>
+    -->
+    </div>
+    <div class="row">
+	  	<div class="col-md-11 offset-md-1">
+        Todo:
+        <ul>
+          <li>Add threshold indicator to Noise Level</li>
+          <li>Add functions for adjusting sensitivity</li>
+          <li>Replace sensitivity adjust with a slider</li>
+          <li>Add a chart that summarises the day by minute at the bottom of the page</li>
+        </ul>
+      </div>
+    </div>
+    <!--
+	  <div class="table-responsive">
+	    <table class="table table-striped">
+	      <thead>
+	        <tr>
+	          <th>Start Time</th>
+	          <th>Duration</th>
+	          <th>Noise Level</th>
+	        </tr>
+	      </thead>
+	      <tbody>
+	      	<tr id="event-row-tpl" class="hide">
+	      		<td class='timestamp'>
+	      		</td>
+	      		<td class='description'>
+	      		</td>
+	      		<td class='level'>
+	      		</td>
+	      	</tr>
+	      </tbody>
+	    </table>
+	  </div>
+  -->
+  </div>
+</div>
+  <script>
+  $(function() {
+    var monitor = new ActivityMonitor();
+    $("#start-recording").on('click', function() {
+      monitor.startListening();
+      $("#stop-recording").toggleClass('disabled hidden');
+      $(this).toggleClass('disabled hidden');
+    });
+    $("#stop-recording").on('click', function() {
+      monitor.stopListening();
+      $("#start-recording").toggleClass('disabled hidden');
+      $(this).toggleClass('disabled hidden');
+    });
+    // see https://github.com/seiyria/bootstrap-slider
+    $("#slider").bootstrapSlider();
+  });
+  </script>
+{% endblock %}

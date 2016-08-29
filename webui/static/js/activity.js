@@ -11,6 +11,8 @@ function ActivityMonitor() {
 					});
 
 	this.historyVis = new HistoryVisualization();
+
+	this.summaryVis = new SummaryVisualization();
 }
 
 ActivityMonitor.NOT_BARKING = "NOT_BARKING";
@@ -255,10 +257,48 @@ function stopRecordingResponse(recorder) {
 	$btn.removeClass("disabled");
 }
 
+function SummaryVisualization() {
+	var ctx = $("#summary_chart").get(0).getContext("2d");
+	this.size = 144;
+	data = _.fill(new Array(this.size), .05);
+	colors = _.fill(new Array(this.size), "green");
+	labels = _.fill(new Array(this.size), "");
+	var i = 0;
+	for (i = 0; i < data.length; i++) {
+		data[i] = Math.random(i);
+		colors[i] = data[i] > 0.8 ? '#aa0000' : '#00aa00';
+	}
+
+	var barData = {
+		labels: labels,
+		datasets: [{
+			data:data,
+			fillColor: function() { return "#aa0000"; }
+		}]
+	};
+	var barOptions = {
+		animation: false,
+		scaleStartValue: 0,
+		scaleSteps: 1,
+		scaleStepWidth: 1,
+		scaleOverride: true,
+		isFixedWidth:false,
+		barValueSpacing:0,
+	};
+
+	this.barChart = new Chart(ctx).Bar(barData, barOptions);
+	for (i = 0; i < data.length; i++) {
+		color = data[i] > 0.8 ? '#aa3333' : '#888888';
+		this.barChart.datasets[0].bars[i].fillColor = color;
+	}
+	this.barChart.update();
+}
+
 function HistoryVisualization() {
 	this.size = 300;
 	this.paused = false;
 	var labels = _.fill(new Array(this.size), "");
+	labels[300] = "Now"
 	labels[240] = "-1 min"
 	labels[180] = "-2 min"
 	labels[120] = "-3 min"
@@ -271,7 +311,7 @@ function HistoryVisualization() {
 		];
 
 	var ctx = $("#history_chart").get(0).getContext("2d");
-	this.chart = new Chart(ctx).Line({labels: labels, datasets: datasets},
+	this.chart = new Chart(ctx).HistoryChart({labels: labels, datasets: datasets},
 		{
 			showTooltips:false,
 			animation:false,
@@ -427,7 +467,6 @@ function drawThresholdLine(self, topAndBottom) {
 		var textLeft = scale.width/2 + textDim.width/2 + scale.xScalePaddingLeft/2;
 
     // draw line
-		console.log(self);
 		var y = ctx.canvas.height * height;
 		var topLeft = {x:scale.xScalePaddingLeft, y:scale.startPoint};
 		var rectDim = {x: ctx.canvas.width, y:y};
@@ -436,7 +475,6 @@ function drawThresholdLine(self, topAndBottom) {
 	  ctx.fillStyle = 'rgba(188,150,150,1)';
 		ctx.fillText("BARKING", textLeft, scale.startPoint + 10);
 		if (topAndBottom) {
-			console.log("CALLED",topLeft.x, scale.endPoint-y, rectDim.x, scale.endPoint);
 	    ctx.fillStyle = 'rgba(255,230,230,0.5)';
 			ctx.fillRect(topLeft.x, scale.endPoint-y, rectDim.x, y);
 		  ctx.fillStyle = 'rgba(188,150,150,1)';
@@ -469,5 +507,13 @@ Chart.types.Line.extend({
 		draw: function() {
 			Chart.types.Line.prototype.draw.apply(this, arguments);
 			drawThresholdLine(this, true);
+		}
+});
+
+Chart.types.Line.extend({
+		name: "HistoryChart",
+		draw: function() {
+			Chart.types.Line.prototype.draw.apply(this, arguments);
+			drawThresholdLine(this, false);
 		}
 });
