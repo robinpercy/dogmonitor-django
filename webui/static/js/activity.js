@@ -415,6 +415,7 @@ var VolumeVisualization = function(opts) {
 	};
 	var barOptions = {
 		animation: false,
+		fillColor: "9BC53D",
 		scaleStartValue: 0,
 		scaleOverride: true,
 		scaleStepWidth: 1,

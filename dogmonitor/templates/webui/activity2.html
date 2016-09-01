@@ -6,17 +6,10 @@
 
 {% block body %}
 <div class="row">
-  <div class="col-sm-3 col-md-2 sidebar">
-    <ul class="nav nav-sidebar">
-      <li class="active"><a href="#">Current Activity!!!<span class="sr-only">(current)</span></a></li>
-      <li><a href="#">Reports</a></li>
-      <li><a href="#">Analytics</a></li>
-      <li><a href="#">Export</a></li>
-    </ul>
-  </div>
-  <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
+  <div class="col-sm-9 col-sm-offset-1 col-md-11 main">
     <div class="row" style='margin-bottom:25px'>
-      <div class="col-md-3">
+      <div class="col-md-12">
+        <br/>
         <button id="start-recording" class='btn btn-lg btn-default'>
           <span class='glyphicon glyphicon-record'></span> Start Recording
         </button>
@@ -24,10 +17,6 @@
           <span class='glyphicon glyphicon-record' style='color:red'></span>
           Stop Recording
         </button>
-      </div>
-      <div class="col-md-8 text-right">
-        Microphone Sensitivity<br/>
-        Min <input id="slider" type='text'></input> Max
       </div>
     </div>
     <div class='row'>
